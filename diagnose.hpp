@@ -7,8 +7,7 @@
 
 inline void diagnose(bool isGood, const std::string& action)
 {
-  if (isGood)
-    std::cout << action.c_str() << " OK" << std::endl;
+  if (isGood);
   else
   {
     std::cerr << action.c_str() << " error" << std::endl;

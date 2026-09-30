@@ -40,7 +40,7 @@ struct Message {
 
 
     string message_to_string(){
-        return to_string(procId) + "-"  + to_string(clock) + "-" + msg;
+        return to_string(procId)  + "-" + msg;
     }
 
     std::array<char, 1024> to_datagram() {
@@ -70,9 +70,6 @@ struct Message {
         msg = msg.assign(ptr);
     }
 
-    friend bool operator<(const Message& a, const Message& b) {
-        return tie(a.clock, a.procId) < tie(b.clock, b.procId);
-    }
 };
 
 struct Client {
@@ -156,10 +153,7 @@ struct Client {
 
         Message m;
         m.from_datagram(arr);
-
-        cout << "Message from multicast sender: " << m.message_to_string() << endl;
-
-        if (m.procId == procId) return m;
+        if(m.procDest != ALL && m.procDest != procId) return m;
 
         if(m.type == HEARTBEAT_REQUEST){
             send_message("I AM LIVE",HEARTBEAT_REPLY, m.procId);
@@ -173,7 +167,7 @@ struct Client {
     }
 
     void start_timer(int interval_ms = 2000) {
-        while (running) {
+        while (true) {
             this_thread::sleep_for(chrono::milliseconds(interval_ms));
             perfect_failure_detector();
         }
@@ -181,8 +175,6 @@ struct Client {
 
     void perfect_failure_detector(){
         for(auto p : process){
-            if (p == procId) continue;
-
             if(!alive.count(p) && !suspected.count(p)){
                 suspected.insert(p);
             }else if(alive.count(p) && suspected.count(p)){
@@ -190,21 +182,48 @@ struct Client {
             }
             send_message("Send heatbeat", HEARTBEAT_REQUEST, ALL);
         }
-        alive.clear();
         leader_election();
+        alive.clear();
     }
 
     int select_candidates(){
         int min_id = INT_MAX;
-        for(auto a: alives){
-            if(a < min){
-                a = min_id;
+        for(auto a: alive){
+            if(a < min_id){
+                min_id = a;
             }
         }
         return min_id;
     }
 
     void leader_election(){
-        select_candidates();
+        int winner = select_candidates();
+        if(winner != INT_MAX)
+            lider = select_candidates();
     }
-}
+
+    void show_infos(){ 
+        cout << "id: " << procId << endl; 
+        cout << "líder: " << lider << endl; 
+
+        cout << "processos: " << endl; 
+        for(auto s : process){ 
+            cout << s << ", "; 
+        } 
+
+        cout << "\nalive: " << endl; 
+        for(auto s : alive){ 
+            cout << s << ", "; 
+        } 
+
+        cout << "\nsuspected: " << endl; 
+        for(auto s : suspected){ 
+            cout << s << ", "; 
+        }
+
+        cout << endl;
+    }
+
+};
+
+#endif

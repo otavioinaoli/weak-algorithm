@@ -166,13 +166,6 @@ struct Client {
         return m;
     }
 
-    void start_timer(int interval_ms = 2000) {
-        while (true) {
-            this_thread::sleep_for(chrono::milliseconds(interval_ms));
-            perfect_failure_detector();
-        }
-    }
-
     void perfect_failure_detector(){
         for(auto p : process){
             if(!alive.count(p) && !suspected.count(p)){

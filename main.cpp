@@ -21,7 +21,10 @@ int main(){
     }); 
 
     thread timer_thread([&c]() {
-        c.start_timer(2000); 
+        while (true) {
+            this_thread::sleep_for(chrono::seconds(2));
+            perfect_failure_detector();
+        }
     }); 
 
     thread info_thread([&c]() {
